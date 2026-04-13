@@ -20,6 +20,7 @@ env:
 
 jobs:
   sync-to-kse:
+    if: github.repository == 'kubesphere/console'
     runs-on: ubuntu-latest
 
     steps:
