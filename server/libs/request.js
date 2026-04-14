@@ -5,6 +5,7 @@
 
 const request = require('./request.base');
 const { getServerConfig } = require('./utils');
+const { isValidBearerToken, normalizeToken } = require('./token');
 
 const { server: serverConfig } = getServerConfig();
 
@@ -13,14 +14,19 @@ const { server: serverConfig } = getServerConfig();
  * @param {options} options: { token, method, url, params }
  */
 const sendGatewayRequest = ({ method, url, params, token, headers = {}, ...rest }) => {
-  const options = { headers, ...rest };
+  const options = { headers: { ...headers }, ...rest };
+  const bearerToken = isValidBearerToken(token) ? normalizeToken(token) : '';
 
-  if (token) {
+  if (bearerToken) {
     options.headers = {
-      Authorization: `Bearer ${token}`,
+      ...headers,
+      Authorization: `Bearer ${bearerToken}`,
       'content-type': headers['content-type'] || 'application/json',
       'x-client-ip': headers['x-client-ip'],
     };
+  } else {
+    delete options.headers.Authorization;
+    delete options.headers.authorization;
   }
 
   return request[method.toLowerCase()](`${serverConfig.apiServer.url}${url}`, params, options);

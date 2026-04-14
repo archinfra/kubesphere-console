@@ -6,6 +6,7 @@
 const isEmpty = require('lodash/isEmpty');
 const isUndefined = require('lodash/isUndefined');
 const { sendGatewayRequest } = require('../libs/request');
+const { getValidCookieToken } = require('../libs/token');
 
 module.exports = async (ctx, next) => {
   if (ctx.headers['x-check-exist']) {
@@ -15,7 +16,7 @@ module.exports = async (ctx, next) => {
         method: ctx.method,
         headers: ctx.headers,
         url,
-        token: ctx.cookies.get('token'),
+        token: getValidCookieToken(ctx),
       });
 
       ctx.status = 200;

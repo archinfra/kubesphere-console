@@ -6,6 +6,7 @@
 const http = require('http');
 
 const { getServerConfig } = require('./libs/utils');
+const { getValidCookieToken, isValidBearerToken } = require('./libs/token');
 
 const { server: serverConfig, target, agent } = getServerConfig();
 
@@ -17,7 +18,7 @@ const k8sResourceProxy = {
   events: {
     proxyReq(proxyReq, req) {
       // Set authorization
-      if (req.token) {
+      if (isValidBearerToken(req.token)) {
         proxyReq.setHeader('Authorization', `Bearer ${req.token}`);
       }
 
@@ -32,7 +33,7 @@ const marketplaceApiProxy = {
   agent,
   events: {
     proxyReq(proxyReq, req) {
-      if (req.token) {
+      if (isValidBearerToken(req.token)) {
         proxyReq.setHeader('Authorization', `Bearer ${req.token}`);
       }
 
@@ -63,7 +64,9 @@ const b2iFileProxy = {
   },
   events: {
     proxyReq(proxyReq, req) {
-      proxyReq.setHeader('Authorization', `Bearer ${req.token}`);
+      if (isValidBearerToken(req.token)) {
+        proxyReq.setHeader('Authorization', `Bearer ${req.token}`);
+      }
 
       NEED_OMIT_HEADERS.forEach(key => proxyReq.removeHeader(key));
     },
@@ -101,7 +104,7 @@ const staticFileProxy = {
   events: {
     proxyReq(proxyReq, req) {
       if (req.method === 'POST') {
-        if (req.token) {
+        if (isValidBearerToken(req.token)) {
           proxyReq.setHeader('Authorization', `Bearer ${req.token}`);
         }
       }
@@ -142,13 +145,13 @@ const oauthProxy = {
   changeOrigin: true,
   optionsHandle(options, req, ctx) {
     // if not login, redirect to login page
-    if (!ctx.cookies.get('token')) {
+    if (!getValidCookieToken(ctx)) {
       ctx.cookies.set('authAuthorizeUrl', req.url);
     }
   },
   events: {
     proxyReq(proxyReq, req) {
-      if (req.token) {
+      if (isValidBearerToken(req.token)) {
         proxyReq.setHeader('Authorization', `Bearer ${req.token}`);
       }
 

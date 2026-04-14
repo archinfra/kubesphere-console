@@ -4,12 +4,18 @@
  */
 
 const { getNewToken } = require('../services/session');
+const { clearAuthCookies, getValidCookieToken, normalizeToken } = require('../libs/token');
 
 module.exports = async (ctx, next) => {
   const expire = ctx.cookies.get('expire');
   if (expire) {
     const current = new Date().getTime();
     if (expire <= current + 600000) {
+      if (!normalizeToken(ctx.cookies.get('refreshToken'))) {
+        clearAuthCookies(ctx);
+        return await next();
+      }
+
       const data = await getNewToken(ctx);
       if (data.token) {
         ctx.cookies.set('token', data.token);
@@ -19,6 +25,8 @@ module.exports = async (ctx, next) => {
       }
     }
   }
+
+  ctx.req.token = ctx.req.token || getValidCookieToken(ctx);
 
   return await next();
 };

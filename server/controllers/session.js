@@ -5,7 +5,6 @@
 
 const isEmpty = require('lodash/isEmpty');
 const get = require('lodash/get');
-const jwtDecode = require('jwt-decode');
 const omit = require('lodash/omit');
 const base64UrlDecode = require('jwt-decode/lib/base64_url_decode');
 const { getServerConfig } = require('../libs/utils');
@@ -22,6 +21,7 @@ const {
 } = require('../libs/utils');
 
 const { sendGatewayRequest } = require('../libs/request');
+const { getValidCookieToken, safeJwtDecode } = require('../libs/token');
 
 const handleLoginByPwd = async ctx => {
   const params = ctx.request.body;
@@ -179,8 +179,9 @@ const handleLogin = async ctx => {
     return;
   }
 
-  if (lastToken) {
-    const { username } = jwtDecode(lastToken);
+  const lastUser = safeJwtDecode(lastToken);
+  if (lastUser) {
+    const { username } = lastUser;
     if (username && username !== user.username) {
       ctx.body = {
         success: true,
@@ -318,8 +319,9 @@ const handleThirdLogin = async ctx => {
     return;
   }
 
-  if (lastToken) {
-    const { username } = jwtDecode(lastToken);
+  const lastUser = safeJwtDecode(lastToken);
+  if (lastUser) {
+    const { username } = lastUser;
     if (username && username !== user.username) {
       // return ctx.redirect('/');
 
@@ -342,7 +344,7 @@ const handleThirdLogin = async ctx => {
 const handleLogout = async ctx => {
   const oAuthLoginInfo = safeParseJSON(decodeURIComponent(ctx.cookies.get('oAuthLoginInfo')));
 
-  const token = ctx.cookies.get('token');
+  const token = getValidCookieToken(ctx);
 
   ctx.cookies.set('token', null);
   ctx.cookies.set('expire', null);
@@ -443,7 +445,7 @@ const handleOAuthLogin = async ctx => {
 };
 
 const handleLoginConfirm = async ctx => {
-  const token = ctx.cookies.get('token');
+  const token = getValidCookieToken(ctx);
   const params = ctx.request.body;
 
   await createUser(params, token);

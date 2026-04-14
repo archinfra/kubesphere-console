@@ -7,6 +7,7 @@ const get = require('lodash/get');
 const pick = require('lodash/pick');
 const merge = require('lodash/merge');
 const { sendGatewayRequest } = require('../libs/request');
+const { getValidCookieToken, isValidBearerToken } = require('../libs/token');
 
 // packages/core/src/globals.d.ts
 const ENTRY_KEYS = [
@@ -28,7 +29,10 @@ const ENTRY_KEYS = [
 const getExtensionEntries = async ctx => {
   const url = '/apis/extensions.kubesphere.io/v1alpha1/extensionentries';
   try {
-    const token = ctx.cookies.get('token');
+    const token = getValidCookieToken(ctx);
+    if (!token) {
+      return [];
+    }
 
     const data = await sendGatewayRequest({ method: 'GET', url, token });
     const items = get(data, 'items', []);
@@ -51,7 +55,10 @@ const getInstalledExtensions = async ctx => {
   const url = '/apis/extensions.kubesphere.io/v1alpha1/jsbundles';
 
   try {
-    const token = ctx.cookies.get('token');
+    const token = getValidCookieToken(ctx);
+    if (!token) {
+      return [];
+    }
 
     const [extensions, extensionEntries] = await Promise.all([
       sendGatewayRequest({ method: 'GET', url, token }),
@@ -96,6 +103,10 @@ const getInstalledExtensions = async ctx => {
 const getEnabledExtensionModules = async ({ token }, ctx) => {
   const url = '/apis/kubesphere.io/v1alpha1/extensions';
   try {
+    if (!isValidBearerToken(token)) {
+      return { enabledExtensionModules: {}, enabledExtensionModulesStatus: {} };
+    }
+
     const extensions = await sendGatewayRequest({
       method: 'GET',
       url,

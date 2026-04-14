@@ -9,6 +9,7 @@ const isArray = require('lodash/isArray');
 const get = require('lodash/get');
 const isFunction = require('lodash/isFunction');
 const streamify = require('stream-array');
+const { getValidCookieToken, isValidBearerToken } = require('../libs/token');
 
 module.exports = (context, options) => (ctx, next) => {
   let eventRegistered = false;
@@ -17,7 +18,7 @@ module.exports = (context, options) => (ctx, next) => {
 
   if (!regex.test(ctx.path)) return next();
 
-  ctx.req.token = ctx.req.token || ctx.cookies.get('token');
+  ctx.req.token = isValidBearerToken(ctx.req.token) ? ctx.req.token : getValidCookieToken(ctx);
 
   const { events, ...httpProxyOpts } = options;
 

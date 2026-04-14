@@ -6,9 +6,9 @@
 const get = require('lodash/get');
 const uniq = require('lodash/uniq');
 const isEmpty = require('lodash/isEmpty');
-const jwtDecode = require('jwt-decode');
 
 const { sendGatewayRequest } = require('../libs/request');
+const { getValidCookieToken, normalizeToken, safeJwtDecode } = require('../libs/token');
 
 const {
   isAppsRoute,
@@ -33,7 +33,12 @@ const handleLoginResp = (resp = {}) => {
     expires_in: expiresIn = 100000,
   } = resp || {};
 
-  const { username, extra, groups } = jwtDecode(token);
+  const decodedToken = safeJwtDecode(token);
+  if (!decodedToken) {
+    throw new Error('Invalid access token');
+  }
+
+  const { username, extra, groups } = decodedToken;
   const email = get(extra, 'email[0]');
   const initialized = get(extra, 'uninitialized[0]') !== 'true';
   const extraname = get(extra, 'username[0]');
@@ -112,8 +117,12 @@ const loginThird = async ({ provider, ...data }) => {
 };
 
 const getNewToken = async ctx => {
-  const refreshToken = ctx.cookies.get('refreshToken');
+  const refreshToken = normalizeToken(ctx.cookies.get('refreshToken'));
   let newToken = {};
+
+  if (!refreshToken) {
+    throw new Error('Invalid refresh token');
+  }
 
   const data = {
     grant_type: 'refresh_token',
@@ -203,7 +212,12 @@ const getUserGlobalRules = async (username, token) => {
 const getUserDetail = async (token, clusterRole) => {
   let user = {};
 
-  const { username } = jwtDecode(token);
+  const decodedToken = safeJwtDecode(token);
+  if (!decodedToken) {
+    throw new Error('Invalid access token');
+  }
+
+  const { username } = decodedToken;
 
   const resp = await sendGatewayRequest({
     method: 'GET',
@@ -306,7 +320,11 @@ const getClusters = async token => {
 
 const getKSConfig = async ctx => {
   let resp = {};
-  const token = ctx.cookies.get('token');
+  const token = getValidCookieToken(ctx);
+  if (!token) {
+    return resp;
+  }
+
   try {
     const [config, version, { enabledExtensionModules, enabledExtensionModulesStatus }] =
       await Promise.all([
@@ -337,7 +355,7 @@ const getKSConfig = async ctx => {
 };
 
 const getCurrentUser = async (ctx, clusterRole, isMulticluster) => {
-  const token = ctx.cookies.get('token');
+  const token = getValidCookieToken(ctx);
 
   if (!token) {
     if (isAppsRoute(ctx.path)) {
@@ -356,7 +374,7 @@ const getCurrentUser = async (ctx, clusterRole, isMulticluster) => {
 };
 
 const getK8sRuntime = async ctx => {
-  const token = ctx.cookies.get('token');
+  const token = getValidCookieToken(ctx);
   let resp = 'docker';
   if (!token) {
     return resp;
@@ -379,7 +397,7 @@ const getK8sRuntime = async ctx => {
 };
 
 const getClusterRole = async ctx => {
-  const token = ctx.cookies.get('token');
+  const token = getValidCookieToken(ctx);
   let role = 'host';
   if (!token) {
     return role;

@@ -29,6 +29,16 @@ const {
 } = require('../libs/utils');
 
 const { client: clientConfig } = getServerConfig();
+const { clearAuthCookies, getValidCookieToken } = require('../libs/token');
+
+const redirectToLogin = ctx => {
+  clearAuthCookies(ctx);
+  if (isValidReferer(ctx.path)) {
+    ctx.redirect(`/login?referer=${ctx.path}`);
+  } else {
+    ctx.redirect('/login');
+  }
+};
 
 const renderIndex = async (ctx, params) => {
   const themeData = await getTheme(ctx);
@@ -193,6 +203,11 @@ const renderMarkdown = async ctx => {
 
 const renderView = async ctx => {
   try {
+    if (!getValidCookieToken(ctx)) {
+      redirectToLogin(ctx);
+      return;
+    }
+
     const clusterRole = await getClusterRole(ctx);
     const ksConfig = await getKSConfig(ctx);
 
@@ -223,6 +238,11 @@ const renderView = async ctx => {
 
 const renderV3View = async ctx => {
   try {
+    if (!getValidCookieToken(ctx)) {
+      redirectToLogin(ctx);
+      return;
+    }
+
     const clusterRole = await getClusterRole(ctx);
     const ksConfig = await getKSConfig(ctx);
 
