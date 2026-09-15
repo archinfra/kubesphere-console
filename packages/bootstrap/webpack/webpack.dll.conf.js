@@ -45,6 +45,7 @@ const config = {
     path: resolveShared('dist/dll'),
     filename: '[name].[chunkhash:8].dll.js',
     library: '[name]',
+    hashFunction: 'sha256',
   },
   resolve: {
     extensions: ['.js', '.jsx', '.css', '.ts', '.tsx', '.json'],

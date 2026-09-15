@@ -19,7 +19,7 @@ PROJECT_DIR="$(dirname "$(realpath "$0")")"/..
 
 # build out
 ${CONTAINER_CLI} run --rm -v "$PROJECT_DIR":/builder/ \
-  node:16.14-alpine3.15 sh -c "cd /builder/ && yarn && yarn build"
+  node:24.21.0-alpine3.24 sh -c "cd /builder/ && yarn && yarn build"
 
 sudo chown $(id -u):$(id -g) -R $PROJECT_DIR/dist
 sudo chown $(id -u):$(id -g) -R $PROJECT_DIR/server
@@ -38,7 +38,7 @@ mv "$PROJECT_DIR"/server/locales \
   "$PROJECT_DIR"/server/configs "$PROJECT_DIR"/out/server/
 
 if [ "$DRY_RUN" = "false" ]; then
-  # shellcheck disable=SC2086 # inteneded splitting of CONTAINER_BUILDER
+  # shellcheck disable=SC2086 # intended splitting of CONTAINER_BUILDER
   ${CONTAINER_CLI} ${CONTAINER_BUILDER} \
     --platform ${PLATFORMS} \
     --push \

@@ -32,6 +32,7 @@ const webpackBaseConfig = merge(configs, {
   output: {
     path: resolve('dist'),
     publicPath: '/',
+    hashFunction: 'sha256',
   },
   resolve: {
     extensions: ['.js', '.jsx', '.css', '.ts', '.tsx', '.json'],
