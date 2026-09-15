@@ -17,6 +17,7 @@ module.exports = {
     publicPath: '/',
     filename: '[name].js',
     libraryTarget: 'commonjs',
+    hashFunction: 'sha256',
   },
   target: 'node',
   node: {
