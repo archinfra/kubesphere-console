@@ -30,7 +30,7 @@
     "dev:server": "NODE_ENV=development ksc-server",
     "kubed:bump": "esno scripts/kubed-bump.ts",
     "lint": "concurrently --group --timings --prefix-colors=auto \"yarn:lint:*(!:fix)\"",
-    "lint:fix": "concurrently --max-processes=1 --group --timings --prefix-colors=auto \"yarn:lint:*:fix)\"",
+    "lint:fix": "concurrently --max-processes=1 --group --timings --prefix-colors=auto \"yarn:lint:*:fix\"",
     "lint:format": "prettier --check --ignore-unknown \"**\"",
     "lint:format:fix": "prettier --write --ignore-unknown \"**\"",
     "lint:package-json": "yarn lint:package-json:fix -- --check",
